@@ -46,7 +46,6 @@ exports.signup = catchAsync(async (req, res, next) => {
     bio: req.body.bio,
   });
   createSendToken(newUser, 201, res);
-  next();
 });
 
 // LOGIN
@@ -82,7 +81,6 @@ exports.login = catchAsync(async (req, res, next) => {
       return next(new AppError("Incorrect username or password", 403));
     }
   }
-
   createSendToken(user, 201, res);
 });
 
@@ -234,8 +232,6 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   if (!req.user) {
     return next(new AppError("You are not logged in!", 403));
   }
-
-  
 
   // 1) get user
   const user = await User.findById(req.userId).select("+password");

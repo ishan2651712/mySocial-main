@@ -1,76 +1,87 @@
-import React, { Component } from 'react'
-import Modal from './../../Components/UI/Modal/Modal';
-import Aux from './../Auxilliary/Auxilliary';
-import Axios from 'axios'
-import { withRouter } from 'react-router-dom';
+import React, { Component } from "react";
+import Modal from "./../../Components/UI/Modal/Modal";
+import Aux from "./../Auxilliary/Auxilliary";
+import Axios from "axios";
+import { withRouter } from "react-router-dom";
 
 const errorHandler = (WrappedComponent) => {
-    return withRouter(class extends Component {
-        state = {
-            hasError: false,
-            error: null,
-        }
-        
-        componentDidMount () {
-            Axios.interceptors.request.use(req => {
-                this.setState({hasError: false, error: null})
-                return req;
-            })
+  return withRouter(
+    class extends Component {
+      state = {
+        hasError: false,
+        error: null,
+      };
 
-            Axios.interceptors.response.use(res => {
-                // console.log(res);
-                return res;
-            }, err => {
-                // console.log(err);
-                this.setState({error: err, hasError: true})  
-                return (err)
-            })
-        }
+      componentDidMount() {
+        Axios.interceptors.request.use((req) => {
+          this.setState({ hasError: false, error: null });
+          return req;
+        });
 
-        closeErrorHandler = () => {
-            this.setState({
-                error: null,
-                hasError: false
-            })
-        }
+        Axios.interceptors.response.use(
+          (res) => {
+            // console.log(res);
+            return res;
+          },
+          (err) => {
+            // console.log(err);
+            this.setState({ error: err, hasError: true });
+            return err;
+          }
+        );
+      }
 
-        render() {
-            let err = {message: null, statusCode: null} , modal;
-            if(this.state.error) {
-                // console.log(this.state.error)
-                if(this.state.error.response){
-                if(this.state.error.response.data) {
-                    err.statusCode = this.state.error.response.status
-                    err.message=this.state.error.response.data.status
+      closeErrorHandler = () => {
+        this.setState({
+          error: null,
+          hasError: false,
+        });
+      };
 
-                } } 
-                else {
-                    err.message = "Network Error, Please Try Again Later"
-                    err.statusCode = 500;
-                }        
-                if(err.message === "jwt expired") {
-                    err.message = "Session Expired. Please Log In Again"
-                    err.statusCode = 401;
-                }
+      render() {
+        let err = { message: null, statusCode: null },
+          modal;
+        if (this.state.error) {
+          console.error(this.state.error);
+          if (this.state.error.response) {
+            if (this.state.error.response.data) {
+              err.statusCode = this.state.error.response.status;
+              err.message = this.state.error.response.data.status;
             }
-            if(this.state.hasError) {
-                modal = <Modal show clicked={this.closeErrorHandler} type="msgModal"><i class='fas fa-ban' style={{color: "red"}}></i> 
-
-                {" "+err.message}
-                <br></br>
-                </Modal>
-            }
-            return (
-                <Aux>       
-                    {/* {console.log(err)} */}
-                    {this.props.location.pathname === "/" || this.props.location.pathname.startsWith('/user/') ||this.props.location.pathname.startsWith('/me')  ? modal: null} 
-                    <WrappedComponent {...this.props} errormsg={err.message} />
-                </Aux>
-            );        
+          }
+          // else {
+          //     err.message = "Network Error, Please Try Again Later"
+          //     err.statusCode = 500;
+          // }
+          if (err.message === "jwt expired") {
+            err.message = "Session Expired. Please Log In Again";
+            err.statusCode = 401;
+          }
         }
-    }    );
-}
+        if (this.state.hasError) {
+          modal = (
+            <Modal show clicked={this.closeErrorHandler} type="msgModal">
+              <i class="fas fa-ban" style={{ color: "red" }}></i>
 
+              {" " + err.message}
+              <br></br>
+            </Modal>
+          );
+        }
+        return (
+          <Aux>
+            {/* {console.log(err)} */}
+            {this.props.location.pathname === "/" ||
+            this.props.location.pathname.startsWith("/user/") ||
+            this.props.location.pathname.startsWith("/me")
+              ? modal
+              : null}
+            <WrappedComponent {...this.props} errormsg={err.message} />
+          </Aux>
+        );
+      }
+    }
+  );
+};
 
-
-export default (errorHandler);
+export default errorHandler;

@@ -11,6 +11,7 @@ import EditPost from "./Components/EditPost/EditPost";
 import UserPage from "./Components/UserPage/UserPage";
 import UpdateMe from "./Components/UserPage/UpdateMe/UpdateMe";
 import UpdatePassword from "./Components/UpdatePassword/UpdatePassword";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 class App extends Component {
   render() {

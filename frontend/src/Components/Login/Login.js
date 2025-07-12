@@ -38,28 +38,32 @@ class Login extends Component {
         password: password,
       },
       withCredentials: true,
-    }).then((res) => {
-      if (res.data) {
-        console.log(res.data.data.username);
-        this.setState({
-          loggedIn: true,
-          username: res.data.data.username,
-          userId: res.data.data.id,
-          status: "Log in successful",
-        });
-        let cookies = this.props.cookies;
-        cookies.set("userLogin", res.data.data);
-        setTimeout(() => {
-          this.props.history.push("/");
-        }, 1000);
-        //  this.props.history.push("/")
-      } else {
-        this.setState({
-          loggedIn: false,
-          status: this.props.errormsg,
-        });
-      }
-    });
+    })
+      .then((res) => {
+        if (res.data) {
+          console.log(res.data.data.username);
+          this.setState({
+            loggedIn: true,
+            username: res.data.data.username,
+            userId: res.data.data.id,
+            status: "Log in successful",
+          });
+          let cookies = this.props.cookies;
+          cookies.set("userLogin", res.data.data);
+          setTimeout(() => {
+            this.props.history.push("/");
+          }, 1000);
+          //  this.props.history.push("/")
+        } else {
+          this.setState({
+            loggedIn: false,
+            status: this.props.errormsg,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   render() {
