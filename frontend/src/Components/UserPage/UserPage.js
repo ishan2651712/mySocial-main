@@ -1,116 +1,97 @@
-import React, { Component } from "react";
-import Posts from "./../../Containers/Posts/Posts";
-import { withRouter, Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useHistory, Link } from "react-router-dom";
 import { withCookies } from "react-cookie";
+
+import Posts from "../../Containers/Posts/Posts";
 import Axios from "../../axios";
 
 import classes from "./UserPage.module.css";
-import userImg from "./../../assets/img/userImg.png";
+import userImg from "../../assets/img/userImg.png";
 import Spinner from "../UI/Spinner/Spinner";
-import Aux from "./../../hoc/Auxilliary/Auxilliary";
+import Aux from "../../hoc/Auxilliary/Auxilliary";
 
-class UserPage extends Component {
-  state = {
-    user: null,
-    loading: null,
-  };
+const UserPage = (props) => {
+  const { cookies } = props;
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  componentDidMount() {
-    this.setState({ loading: true });
-    const {
-      match: { params },
-    } = this.props;
-    Axios({
-      method: "GET",
-      url: `${
-        params.userId ? `/social/users/${params.userId}` : `/social/users/me`
-      }`,
-      withCredentials: true,
-    }).then((res) => {
-      console.log(res);
-      if (res.status === 200) {
-        this.setState({
-          user: res.data.data,
-          loading: false,
-        });
-      } else {
-        setTimeout(() => {
-          this.props.history.push("/authenticate");
-        }, 1000);
-      }
-    });
-  }
+  const { userId } = useParams();
+  const history = useHistory();
 
-  render() {
-    let cookies = this.props.cookies;
-    let userloggedIn = cookies.get("userLogin");
-    // const {
-    //   match: { params },
-    // } = this.props;
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const url = userId
+          ? `/social/users/${userId}`
+          : `/social/users/me`;
 
-    let updateInfo = (
-      <button className={classes.UpdateInfo}>Update Info</button>
-    );
-    if (!userloggedIn) {
-      updateInfo = null;
-    } else {
-      if (this.state.user) {
-        if (this.state.user._id === userloggedIn._id) {
-          updateInfo = null;
+        const res = await Axios.get(url, { withCredentials: true });
+
+        if (res.status === 200) {
+          setUser(res.data.data);
+        } else {
+          setTimeout(() => {
+            history.push("/authenticate");
+          }, 1000);
         }
+      } catch (error) {
+        setTimeout(() => {
+          history.push("/authenticate");
+        }, 1000);
+      } finally {
+        setLoading(false);
       }
-      updateInfo = (
-        <Link className={classes.UpdateInfo} to="/updateMe">
-          Update Info
-        </Link>
-      );
-    }
+    };
 
-    return (
-      <Aux>
-        {this.state.loading ? (
-          <Spinner />
-        ) : (
-          <div>
-            <div className={classes.UserPanel}>
-              <div className={classes.userNameImg}>
-                <img
-                  src={userImg}
-                  className={classes.img}
-                  width="180px"
-                  alt="user"
-                ></img>
-                <p className={classes.Name}>
-                  {this.state.user ? this.state.user.name : null}
-                </p>
-              </div>
-              <div className={classes.Divider}></div>
-              <div className={classes.UserInfo}>
-                <p className={classes.Username}>
-                  {this.state.user ? "u/" + this.state.user.username : null}
-                </p>
+    fetchUser();
+  }, [userId, history]);
 
-                <span className={classes.Info}>
-                  Joined{" "}
-                  {this.state.user
-                    ? new Date(this.state.user.createdAt).toDateString()
-                    : null}
-                  <br></br>
-                </span>
-                <span className={classes.Info}>
-                  {" "}
-                  {this.state.user ? this.state.user.posts.length : null} Posts
-                  <br></br>
-                </span>
-                {updateInfo}
-              </div>
-            </div>
-            <Posts user={this.state.user ? this.state.user._id : null} />
-          </div>
-        )}
-      </Aux>
+  const userloggedIn = cookies.get("userLogin");
+
+  let updateInfo = null;
+  if (userloggedIn && user && user._id === userloggedIn._id) {
+    updateInfo = (
+      <Link className={classes.UpdateInfo} to="/updateMe">
+        Update Info
+      </Link>
     );
   }
-}
 
-export default withRouter(withCookies(UserPage));
+  return (
+    <Aux>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <div>
+          <div className={classes.UserPanel}>
+            <div className={classes.userNameImg}>
+              <img
+                src={userImg}
+                className={classes.img}
+                width="180px"
+                alt="user"
+              />
+              <p className={classes.Name}>{user?.name}</p>
+            </div>
+            <div className={classes.Divider}></div>
+            <div className={classes.UserInfo}>
+              <p className={classes.Username}>u/{user?.username}</p>
+              <span className={classes.Info}>
+                Joined {new Date(user?.createdAt).toDateString()}
+                <br />
+              </span>
+              <span className={classes.Info}>
+                {user?.posts?.length || 0} Posts
+                <br />
+              </span>
+              {updateInfo}
+            </div>
+          </div>
+          <Posts user={user?._id || null} />
+        </div>
+      )}
+    </Aux>
+  );
+};
+
+export default withCookies(UserPage);

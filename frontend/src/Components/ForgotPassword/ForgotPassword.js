@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import classes from "./ForgotPassword.module.css";
 import Axios from "../../axios";
 
@@ -6,20 +6,20 @@ import { withRouter } from "react-router-dom";
 import Spinner from "./../UI/Spinner/Spinner";
 import { withCookies } from "react-cookie";
 
-class forgotPassword extends Component {
-  state = {
-    status: this.props.errormsg,
-    forgotPassword: null,
-    resetPassword: null,
-    loading: null,
-    disabled: true,
-  };
-  resetPasswordHandler = (event) => {
+const ForgotPassword = (props) => {
+  const [status, setStatus] = useState(props.errormsg);
+  const [forgotPassword, setForgotPassword] = useState(null);
+  const [resetPassword, setResetPassword] = useState(null);
+  const [loading, setLoading] = useState(null);
+
+  const resetPasswordHandler = (event) => {
     event.preventDefault();
-    let password = document.getElementsByName("password")[0].value;
-    let passwordConfirm =
+
+    const password = document.getElementsByName("password")[0].value;
+    const passwordConfirm =
       document.getElementsByName("passwordConfirm")[0].value;
-    let token = document.getElementsByName("token")[0].value;
+    const token = document.getElementsByName("token")[0].value;
+
     Axios({
       method: "PATCH",
       url: `/social/users/resetPassword`,
@@ -27,37 +27,34 @@ class forgotPassword extends Component {
         "Content-Type": "application/json",
       },
       data: {
-        password: password,
-        passwordConfirm: passwordConfirm,
-        token: token,
+        password,
+        passwordConfirm,
+        token,
       },
     }).then((res) => {
       if (res.data) {
-        let cookies = this.props.cookies;
-        cookies.set("userLogin", res.data.data);
+        props.cookies.set("userLogin", res.data.data);
 
-        this.setState({
-          status: "Password Updated Successfully",
-          resetPassword: true,
-        });
+        setStatus("Password Updated Successfully");
+        setResetPassword(true);
 
         setTimeout(() => {
-          this.props.history.push("/");
+          props.history.push("/");
         }, 1000);
       } else {
-        this.setState({
-          status: this.props.errormsg,
-          resetPassword: false,
-          loading: false,
-        });
+        setStatus(props.errormsg);
+        setResetPassword(false);
+        setLoading(false);
       }
     });
   };
 
-  forgotPasswordHandler = (event) => {
-    this.setState({ loading: true });
+  const forgotPasswordHandler = (event) => {
+    setLoading(true);
     event.preventDefault();
-    let email = document.getElementsByName("email")[0].value;
+
+    const email = document.getElementsByName("email")[0].value;
+
     Axios({
       method: "POST",
       url: `/social/users/forgotPassword`,
@@ -65,98 +62,77 @@ class forgotPassword extends Component {
         "Content-Type": "application/json",
       },
       data: {
-        email: email,
+        email,
       },
       withCredentials: true,
-    }).then(
-      (res) => {
-        if (res.data) {
-          this.setState({
-            status: res.data.message,
-            forgotPassword: true,
-            loading: false,
-          });
-        } else {
-          this.setState({
-            status: this.props.errormsg,
-            forgotPassword: false,
-            loading: false,
-          });
-        }
-
-        // else {
-        //   this.setState({
-        //     forgotPassword: false,
-        //     status: "Network Error, Please try after a while",
-        //     loading: false,
-        //   });
-        // }
+    }).then((res) => {
+      if (res.data) {
+        setStatus(res.data.message);
+        setForgotPassword(true);
+        setLoading(false);
+      } else {
+        setStatus(props.errormsg);
+        setForgotPassword(false);
+        setLoading(false);
       }
-      //no point of writing catch block...
-    );
+    });
   };
-  render() {
-    let attachedClasses = [];
-    let content;
-    if (this.state.forgotPassword) {
-      attachedClasses.push(classes.Green);
-    } else {
-      attachedClasses.push(classes.Red);
-    }
 
-    if (this.state.resetPassword === false) {
-      attachedClasses.pop(classes.Green);
-      attachedClasses.push(classes.Red);
-    }
+  const attachedClasses = [];
 
-    if (this.state.loading === true) {
-      content = <Spinner />;
-    } else
-      content = (
-        <form className={classes.loginform}>
-          {this.state.forgotPassword ? null : (
-            <input type="text" placeholder="email" name="email" />
-          )}
-          {this.state.forgotPassword ? (
-            <div>
-              <input type="text" placeholder="token" name="token" />
-              <input
-                type="password"
-                placeholder="New Password"
-                name="password"
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                name="passwordConfirm"
-              />
-            </div>
-          ) : null}
-          {this.state.forgotPassword ? (
-            <button onClick={this.resetPasswordHandler}>reset password</button>
-          ) : (
-            <button onClick={this.forgotPasswordHandler}>
-              forgot password
-            </button>
-          )}
-          <span class={attachedClasses.join(" ")}>
-            {this.state.forgotPassword === null ? " " : this.state.status}
-          </span>
-          <p className={classes.message} onClick={this.props.login}>
-            Log-in
-          </p>
-
-          <p className={classes.message} onClick={this.props.signup}>
-            Not registered? Create an account
-          </p>
-        </form>
-      );
-    return (
-      <div className={classes.loginpage}>
-        <div className={classes.form}>{content}</div>
-      </div>
-    );
+  if (forgotPassword) {
+    attachedClasses.push(classes.Green);
+  } else {
+    attachedClasses.push(classes.Red);
   }
-}
 
-export default withCookies(withRouter(forgotPassword));
+  if (resetPassword === false) {
+    const index = attachedClasses.indexOf(classes.Green);
+    if (index !== -1) attachedClasses.splice(index, 1);
+    attachedClasses.push(classes.Red);
+  }
+
+  const content = loading ? (
+    <Spinner />
+  ) : (
+    <form className={classes.loginform}>
+      {!forgotPassword && (
+        <input type="text" placeholder="email" name="email" />
+      )}
+      {forgotPassword && (
+        <div>
+          <input type="text" placeholder="token" name="token" />
+          <input type="password" placeholder="New Password" name="password" />
+          <input
+            type="password"
+            placeholder="Confirm New Password"
+            name="passwordConfirm"
+          />
+        </div>
+      )}
+      {forgotPassword ? (
+        <button onClick={resetPasswordHandler}>reset password</button>
+      ) : (
+        <button onClick={forgotPasswordHandler}>forgot password</button>
+      )}
+      <span className={attachedClasses.join(" ")}>
+        {forgotPassword === null ? " " : status}
+      </span>
+      <p className={classes.message} onClick={props.login}>
+        Log-in
+      </p>
+
+      <p className={classes.message} onClick={props.signup}>
+        Not registered? Create an account
+      </p>
+    </form>
+  );
+
+  return (
+    <div className={classes.loginpage}>
+      <div className={classes.form}>{content}</div>
+    </div>
+  );
+};
+
+export default withCookies(withRouter(ForgotPassword));

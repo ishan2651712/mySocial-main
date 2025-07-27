@@ -1,87 +1,75 @@
-import React, { Component } from "react";
-import Modal from "./../../Components/UI/Modal/Modal";
-import Aux from "./../Auxilliary/Auxilliary";
+import React, { useEffect, useState } from "react";
+import Modal from "../../Components/UI/Modal/Modal";
+import Aux from "../Auxilliary/Auxilliary";
 import Axios from "axios";
-import { withRouter } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 
 const errorHandler = (WrappedComponent) => {
-  return withRouter(
-    class extends Component {
-      state = {
-        hasError: false,
-        error: null,
-      };
+  return (props) => {
+    const [hasError, setHasError] = useState(false);
+    const [error, setError] = useState(null);
 
-      componentDidMount() {
-        Axios.interceptors.request.use((req) => {
-          this.setState({ hasError: false, error: null });
-          return req;
-        });
+    const location = useLocation();
+    const history = useHistory();
 
-        Axios.interceptors.response.use(
-          (res) => {
-            // console.log(res);
-            return res;
-          },
-          (err) => {
-            // console.log(err);
-            this.setState({ error: err, hasError: true });
-            return err;
-          }
-        );
-      }
+    useEffect(() => {
+      const reqInterceptor = Axios.interceptors.request.use((req) => {
+        setHasError(false);
+        setError(null);
+        return req;
+      });
 
-      closeErrorHandler = () => {
-        this.setState({
-          error: null,
-          hasError: false,
-        });
-      };
-
-      render() {
-        let err = { message: null, statusCode: null },
-          modal;
-        if (this.state.error) {
-          console.error(this.state.error);
-          if (this.state.error.response) {
-            if (this.state.error.response.data) {
-              err.statusCode = this.state.error.response.status;
-              err.message = this.state.error.response.data.status;
-            }
-          }
-          // else {
-          //     err.message = "Network Error, Please Try Again Later"
-          //     err.statusCode = 500;
-          // }
-          if (err.message === "jwt expired") {
-            err.message = "Session Expired. Please Log In Again";
-            err.statusCode = 401;
-          }
+      const resInterceptor = Axios.interceptors.response.use(
+        (res) => res,
+        (err) => {
+          setError(err);
+          setHasError(true);
+          return Promise.reject(err); // Important to reject to preserve behavior
         }
-        if (this.state.hasError) {
-          modal = (
-            <Modal show clicked={this.closeErrorHandler} type="msgModal">
-              <i class="fas fa-ban" style={{ color: "red" }}></i>
+      );
 
-              {" " + err.message}
-              <br></br>
-            </Modal>
-          );
-        }
-        return (
-          <Aux>
-            {/* {console.log(err)} */}
-            {this.props.location.pathname === "/" ||
-            this.props.location.pathname.startsWith("/user/") ||
-            this.props.location.pathname.startsWith("/me")
-              ? modal
-              : null}
-            <WrappedComponent {...this.props} errormsg={err.message} />
-          </Aux>
-        );
-      }
+      // Cleanup interceptors on unmount
+      return () => {
+        Axios.interceptors.request.eject(reqInterceptor);
+        Axios.interceptors.response.eject(resInterceptor);
+      };
+    }, []);
+
+    const closeErrorHandler = () => {
+      setHasError(false);
+      setError(null);
+    };
+
+    let err = { message: null, statusCode: null };
+
+    if (error?.response) {
+      err.statusCode = error.response.status;
+      err.message = error.response.data?.status;
     }
-  );
+
+    if (err.message === "jwt expired") {
+      err.message = "Session Expired. Please Log In Again";
+      err.statusCode = 401;
+    }
+
+    const shouldShowModal =
+      location.pathname === "/" ||
+      location.pathname.startsWith("/user/") ||
+      location.pathname.startsWith("/me");
+
+    return (
+      <Aux>
+        {hasError && shouldShowModal && (
+          <Modal show clicked={closeErrorHandler} type="msgModal">
+            <i className="fas fa-ban" style={{ color: "red" }}></i>{" "}
+            {err.message}
+            <br />
+          </Modal>
+        )}
+        <WrappedComponent {...props} errormsg={err.message} />
+      </Aux>
+    );
+  };
 };
 
 export default errorHandler;

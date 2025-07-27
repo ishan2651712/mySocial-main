@@ -1,28 +1,30 @@
-import React, { Component } from "react";
+import React, { useState, useRef } from "react";
 import classes from "./UpdatePassword.module.css";
 import Axios from "../../axios";
 
-import { withRouter } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import Spinner from "./../UI/Spinner/Spinner";
 import { withCookies } from "react-cookie";
 
-class UpdatePassword extends Component {
-  state = {
-    status: this.props.errormsg,
-    updatePassword: null,
-    loading: null,
-    disabled: true,
-  };
+const UpdatePassword = ({ cookies, login, signup, errormsg }) => {
+  const [status, setStatus] = useState(errormsg);
+  const [updatePassword, setUpdatePassword] = useState(null);
+  const [loading, setLoading] = useState(null);
 
-  updatePasswordHandler = (event) => {
-    this.setState({ loading: true });
+  const currentPasswordRef = useRef(null);
+  const updatedPasswordRef = useRef(null);
+  const passwordConfirmRef = useRef(null);
+
+  const history = useHistory();
+
+  const updatePasswordHandler = (event) => {
     event.preventDefault();
-    let currentPassword =
-      document.getElementsByName("currentPassword")[0].value;
-    let updatedPassword =
-      document.getElementsByName("updatedPassword")[0].value;
-    let passwordConfirm =
-      document.getElementsByName("passwordConfirm")[0].value;
+    setLoading(true);
+
+    const currentPassword = currentPasswordRef.current.value;
+    const updatedPassword = updatedPasswordRef.current.value;
+    const passwordConfirm = passwordConfirmRef.current.value;
+
     Axios({
       method: "PATCH",
       url: `/social/users/updatePassword`,
@@ -30,86 +32,83 @@ class UpdatePassword extends Component {
         "Content-Type": "application/json",
       },
       data: {
-        currentPassword: currentPassword,
-        updatedPassword: updatedPassword,
-        passwordConfirm: passwordConfirm,
+        currentPassword,
+        updatedPassword,
+        passwordConfirm,
       },
       withCredentials: true,
-    }).then((res) => {
-      if (res.data) {
-        let cookies = this.props.cookies;
-        cookies.set("userLogin", res.data.data);
-
-        this.setState({
-          status: "Password Updated Successfully",
-          updatePassword: true,
-          loading: false,
-        });
-
-        setTimeout(() => {
-          this.props.history.push("/");
-        }, 1000);
-      } else {
-        this.setState({
-          status: this.props.errormsg,
-          updatePassword: false,
-          loading: false,
-        });
-      }
-    });
+    })
+      .then((res) => {
+        if (res.data) {
+          cookies.set("userLogin", res.data.data);
+          setStatus("Password Updated Successfully");
+          setUpdatePassword(true);
+          setLoading(false);
+          setTimeout(() => {
+            history.push("/");
+          }, 1000);
+        } else {
+          setStatus(errormsg);
+          setUpdatePassword(false);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        const msg =
+          err.response?.data?.error?.message ||
+          "Network error. Please try again.";
+        setStatus(msg);
+        setUpdatePassword(false);
+        setLoading(false);
+      });
   };
 
-  render() {
-    let attachedClasses = [];
-    let content;
-    if (this.state.updatePassword) {
-      attachedClasses.push(classes.Green);
-    } else {
-      attachedClasses.push(classes.Red);
-    }
+  const attachedClasses = [updatePassword ? classes.Green : classes.Red];
 
-    if (this.state.loading === true) {
-      content = <Spinner />;
-    } else
-      content = (
-        <form className={classes.loginform}>
-          <div>
-            <input
-              type="password"
-              placeholder="Current Password"
-              name="currentPassword"
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              name="updatedPassword"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              name="passwordConfirm"
-            />
-          </div>
-          <button onClick={this.updatePasswordHandler}>update password</button>
+  return (
+    <div className={classes.loginpage}>
+      <div className={classes.form}>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <form className={classes.loginform}>
+            <div>
+              <input
+                type="password"
+                placeholder="Current Password"
+                name="currentPassword"
+                ref={currentPasswordRef}
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                name="updatedPassword"
+                ref={updatedPasswordRef}
+              />
+              <input
+                type="password"
+                placeholder="Confirm New Password"
+                name="passwordConfirm"
+                ref={passwordConfirmRef}
+              />
+            </div>
+            <button onClick={updatePasswordHandler}>update password</button>
 
-          <span class={attachedClasses.join(" ")}>
-            {this.state.updatePassword === null ? " " : this.state.status}
-          </span>
-          <p className={classes.message} onClick={this.props.login}>
-            Log-in
-          </p>
+            <span className={attachedClasses.join(" ")}>
+              {updatePassword === null ? " " : status}
+            </span>
 
-          <p className={classes.message} onClick={this.props.signup}>
-            Not registered? Create an account
-          </p>
-        </form>
-      );
-    return (
-      <div className={classes.loginpage}>
-        <div className={classes.form}>{content}</div>
+            <p className={classes.message} onClick={login}>
+              Log-in
+            </p>
+            <p className={classes.message} onClick={signup}>
+              Not registered? Create an account
+            </p>
+          </form>
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
-export default withCookies(withRouter(UpdatePassword));
+export default withCookies(UpdatePassword);

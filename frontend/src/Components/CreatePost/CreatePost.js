@@ -1,24 +1,20 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import classes from "./CreatePost.module.css";
-import Axios from "../../axios"; // ✅ 2 levels up from CreatePost to src
-
+import Axios from "../../axios";
 import { withRouter } from "react-router-dom";
 import Spinner from "../UI/Spinner/Spinner";
 
-// Axios.defaults.baseURL = 'http://localhost:9000'       //disable in prod.
+const CreatePost = (props) => {
+  const [status, setStatus] = useState(null);
+  const [created, setCreated] = useState(null);
+  const [loading, setLoading] = useState(null);
 
-class createPost extends Component {
-  state = {
-    status: null,
-    created: null,
-    loading: null,
-  };
-  createPostHandler = (event) => {
-    this.setState({ loading: true });
+  const createPostHandler = (event) => {
     event.preventDefault();
-    // console.log(document.getElementsByName("title")[0].value);
-    let title = document.getElementsByName("title")[0].value;
-    let content = document.getElementsByName("content")[0].value;
+    setLoading(true);
+
+    const title = document.getElementsByName("title")[0].value;
+    const content = document.getElementsByName("content")[0].value;
 
     Axios({
       method: "POST",
@@ -26,59 +22,47 @@ class createPost extends Component {
       headers: {
         "Content-Type": "application/json",
       },
-      data: {
-        title: title,
-        content: content,
-      },
+      data: { title, content },
       withCredentials: true,
     }).then((res) => {
       if (res.data) {
         console.log(res.data.data);
-        this.setState({
-          status: "Post created Successfully",
-          created: true,
-          loading: false,
-        });
+        setStatus("Post created Successfully");
+        setCreated(true);
+        setLoading(false);
         setTimeout(() => {
-          this.props.history.push("/");
+          props.history.push("/");
         }, 1000);
       } else {
-        console.log(this.props.errormsg);
-        this.setState({
-          status: this.props.errormsg,
-          created: false,
-          loading: false,
-        });
+        console.log(props.errormsg);
+        setStatus(props.errormsg);
+        setCreated(false);
+        setLoading(false);
       }
     });
   };
-  render() {
-    let attachedClasses = [];
-    if (this.state.created) {
-      attachedClasses.push(classes.Green);
-    } else {
-      attachedClasses.push(classes.Red);
-    }
-    return (
-      <div className={classes.CreatePost}>
-        {this.state.loading ? (
-          <Spinner />
-        ) : (
-          <form className={classes.form}>
-            <label>Create a Post</label>
-            <hr></hr>
-            <input placeholder="Title" name="title"></input>
-            <textarea
-              placeholder="Your ideas and thoughts go here"
-              name="content"
-            ></textarea>
-            <p className={attachedClasses.join(" ")}>{this.state.status}</p>
-            <button onClick={this.createPostHandler}>Post</button>
-          </form>
-        )}
-      </div>
-    );
-  }
-}
 
-export default withRouter(createPost);
+  const attachedClasses = [created ? classes.Green : classes.Red];
+
+  return (
+    <div className={classes.CreatePost}>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <form className={classes.form}>
+          <label>Create a Post</label>
+          <hr />
+          <input placeholder="Title" name="title" />
+          <textarea
+            placeholder="Your ideas and thoughts go here"
+            name="content"
+          ></textarea>
+          <p className={attachedClasses.join(" ")}>{status}</p>
+          <button onClick={createPostHandler}>Post</button>
+        </form>
+      )}
+    </div>
+  );
+};
+
+export default withRouter(CreatePost);

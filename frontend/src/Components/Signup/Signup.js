@@ -1,29 +1,34 @@
-import React, { Component } from "react";
+import React, { useState, useRef } from "react";
 import classes from "./Signup.module.css";
 import Axios from "../../axios";
 
-import { withRouter } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import Spinner from "../UI/Spinner/Spinner";
 import { withCookies } from "react-cookie";
 
-// Axios.defaults.baseURL = 'http://localhost:9000'       //disable in prod.
+const Signup = ({ cookies, login }) => {
+  const [signedUp, setSignedUp] = useState(null);
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
-class signup extends Component {
-  state = {
-    signedUp: null,
-    status: "",
-    loading: null,
-  };
-  signUp = (event) => {
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const usernameRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+
+  const history = useHistory();
+
+  const signUp = (event) => {
     event.preventDefault();
-    let name = document.getElementsByName("name")[0].value;
-    let email = document.getElementsByName("email")[0].value;
-    let username = document.getElementsByName("username")[0].value;
-    let password = document.getElementsByName("password")[0].value;
-    let passwordConfirm =
-      document.getElementsByName("confirmPassword")[0].value;
-    // let bio = document.getElementsByName("bio")[0].value
-    this.setState({ loading: true });
+
+    const name = nameRef.current.value;
+    const email = emailRef.current.value;
+    const username = usernameRef.current.value;
+    const password = passwordRef.current.value;
+    const passwordConfirm = confirmPasswordRef.current.value;
+
+    setLoading(true);
 
     Axios({
       method: "POST",
@@ -32,121 +37,85 @@ class signup extends Component {
         "Content-Type": "application/json",
       },
       data: {
-        name: name,
-        email: email,
-        username: username,
-        password: password,
-        passwordConfirm: passwordConfirm,
-        // bio: bio
+        name,
+        email,
+        username,
+        password,
+        passwordConfirm,
       },
       withCredentials: true,
-    }).then((res) => {
-      console.log("res recieved");
-      if (res.data) {
-        console.log(res.data);
-        this.setState({
-          signedUp: true,
-          status: "Account Created Successfully",
-          loading: false,
-        });
-        let cookies = this.props.cookies;
-        cookies.set("userLogin", res.data.data);
+    })
+      .then((res) => {
+        if (res.data) {
+          setSignedUp(true);
+          setStatus("Account Created Successfully");
+          setLoading(false);
+          cookies.set("userLogin", res.data.data);
 
-        setTimeout(() => {
-          this.props.history.push("/");
-        }, 1000);
-      } else {
-        this.setState({
-          signedUp: false,
-          status: this.props.errormsg.message,
-          loading: false,
-        });
-        document.getElementsByName("name")[0].value = name;
-        document.getElementsByName("email")[0].value = email;
-        document.getElementsByName("password")[0].value = password;
-        document.getElementsByName("confirmPassword")[0].value =
-          passwordConfirm;
-        document.getElementsByName("username")[0].value = username;
-      }
-      // } else if (res.response) {
-      //   console.log(res.response.data);
-      //   let errmsg, errors;
-      //   if (res.response.data.error.errors) {
-      //     errmsg = Object.keys(res.response.data.error.errors);
-      //     errors = [];
-      //     errmsg.map((el) =>
-      //       errors.push(res.response.data.error.errors[el].properties.message)
-      //     );
-      //     errors = errors.join(", ");
-      //   } else {
-      //     errors = "Network Error";
-      //   }
-      // } else {
-      //   this.setState({
-      //     signedUp: false,
-      //     status: "Network Error, Please try after a while"
-      //   })
-      // }
-    });
-    // .catch((err) => {
-    //   console.log(err.response.data)
-    //   let errmsg, errors;
-    //   if(err.response.data.error.errors) {
-    //    errmsg = Object.keys(err.response.data.error.errors)
-    //    errors = []
-    //    errmsg.map((el)=>
-    //     errors.push(err.response.data.error.errors[el].properties.message)
-    //   )
-    //   errors = errors.join(', ')
-    //   } else {
-    //     errors = err.response.data.error
-    //   }
-
-    //   this.setState({
-    //     signedUp: false,
-    //     status: errors
-    //   })
-    // });
-
-    // CHANGE SIGNUP STATE FROM AUTHENTICATE.JS WHEN U R DONE
+          setTimeout(() => {
+            history.push("/");
+          }, 1000);
+        } else {
+          setSignedUp(false);
+          setStatus("Unexpected error. Please try again.");
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        setSignedUp(false);
+        const msg =
+          err.response?.data?.error?.message ||
+          "Network Error, Please try again later";
+        setStatus(msg);
+        setLoading(false);
+      });
   };
-  render() {
-    let attachedClasses = [];
-    if (this.state.signedUp) {
-      attachedClasses.push(classes.Green);
-    } else {
-      attachedClasses.push(classes.Red);
-    }
-    // console.log(attachedClasses);
-    return (
-      <div className={classes.loginpage}>
-        <div className={classes.form}>
-          {this.state.loading ? (
-            <Spinner />
-          ) : (
-            <form className={classes.registerform}>
-              <input type="text" placeholder="name" name="name" />
-              <input type="text" placeholder="email address" name="email" />
-              <input type="text" placeholder="username" name="username" />
-              <input type="password" placeholder="password" name="password" />
-              <input
-                type="password"
-                placeholder=" confirm password"
-                name="confirmPassword"
-              />
-              {/* <textarea placeholder="Bio... (optional, will appear on your profile page)" name="bio"/> */}
 
-              <button onClick={this.signUp}>create</button>
-              <span class={attachedClasses.join(" ")}>{this.state.status}</span>
-              <p className={classes.message} onClick={this.props.login}>
-                Already registered? <span>Sign In</span>
-              </p>
-            </form>
-          )}
-        </div>
+  const attachedClasses = [signedUp ? classes.Green : classes.Red];
+
+  return (
+    <div className={classes.loginpage}>
+      <div className={classes.form}>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <form className={classes.registerform}>
+            <input type="text" placeholder="name" name="name" ref={nameRef} />
+            <input
+              type="text"
+              placeholder="email address"
+              name="email"
+              ref={emailRef}
+            />
+            <input
+              type="text"
+              placeholder="username"
+              name="username"
+              ref={usernameRef}
+            />
+            <input
+              type="password"
+              placeholder="password"
+              name="password"
+              ref={passwordRef}
+            />
+            <input
+              type="password"
+              placeholder=" confirm password"
+              name="confirmPassword"
+              ref={confirmPasswordRef}
+            />
+
+            <button onClick={signUp}>create</button>
+            <span className={attachedClasses.join(" ")}>{status}</span>
+            <p className={classes.message} onClick={login}>
+              Already registered? <span>Sign In</span>
+            </p>
+          </form>
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
-export default withRouter(withCookies(signup));
+export default withCookies(Signup);

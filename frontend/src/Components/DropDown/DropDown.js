@@ -1,36 +1,29 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import DropDownButton from "./DropDownButton.js/DropDownButton";
 import classes from "./DropDown.module.css";
 
-class DropDown extends Component {
-  state = {
-    show: false,
-    btnClicked: false,
+const DropDown = (props) => {
+  const [show, setShow] = useState(false);
+  const [btnClicked, setBtnClicked] = useState(false);
+
+  const btnClickHandler = () => {
+    setShow((prev) => !prev);
+    setBtnClicked((prev) => !prev);
   };
 
-  btnClickHandler = () => {
-    this.setState({
-      show: !this.state.show,
-      btnClicked: !this.state.btnClicked,
-    });
-  };
+  return (
+    <div className={classes.DropDown}>
+      <DropDownButton clicked={btnClickHandler}>
+        {props.button}
+      </DropDownButton>
 
-  render() {
-    return (
-      <div className={classes.DropDown}>
-        <DropDownButton clicked={this.btnClickHandler}>
-          {this.props.button}
-        </DropDownButton>
-
-        {this.state.show ? (
-            
-          <div className={classes.Content}>
-            <ul className={classes.Options}>{this.props.children}</ul>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-}
+      {show ? (
+        <div className={classes.Content}>
+          <ul className={classes.Options}>{props.children}</ul>
+        </div>
+      ) : null}
+    </div>
+  );
+};
 
 export default DropDown;

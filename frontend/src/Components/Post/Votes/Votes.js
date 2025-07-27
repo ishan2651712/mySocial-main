@@ -1,22 +1,21 @@
-import React, { Component } from 'react'
-import UpvoteButton from './UpvoteButton/UpvoteButton'
-import DownvoteButton from './DownvoteButton/DownvoteButton'
-import classes from './Votes.module.css'
+import React from 'react';
+import UpvoteButton from './UpvoteButton/UpvoteButton';
+import DownvoteButton from './DownvoteButton/DownvoteButton';
+import classes from './Votes.module.css';
 
-class Votes extends Component {
-    render() {        
-        return(
+const Votes = (props) => {
+    const { upHandler, downHandler, up, down, upvotes, downvotes } = props;
+    return (
         <div className={classes.VoteCounter}>
-            <span className={classes.Vote} onClick={this.props.upHandler} >
-                <UpvoteButton red={this.props.up} upvotes={this.props.upvotes} /> 
-            </span >
+            <span className={classes.Vote} onClick={upHandler}>
+                <UpvoteButton red={up} upvotes={upvotes} />
+            </span>
 
-            <span className={classes.Vote} onClick={this.props.downHandler} >
-                <DownvoteButton blue={this.props.down} downvotes={this.props.downvotes} />
+            <span className={classes.Vote} onClick={downHandler}>
+                <DownvoteButton blue={down} downvotes={downvotes} />
             </span>
         </div>
-        );
-    }
-}
+    );
+};
 
-export default Votes
+export default Votes;

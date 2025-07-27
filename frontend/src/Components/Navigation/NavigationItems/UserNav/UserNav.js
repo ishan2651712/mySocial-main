@@ -30,10 +30,10 @@ const userNav = (props) => {
 
 
   // attachedClasses = attachedClasses.join(' ')
-  
+
   return (
     <div>
-      <div className={classes.UserNav} style={props.active ? {backgroundColor: "white", color: "black"} : {backgroundColor: "black", color: "white"}} onClick={toggleDropdown}>
+      <div className={classes.UserNav} style={props.active ? { backgroundColor: "white", color: "black" } : { backgroundColor: "black", color: "white" }} onClick={toggleDropdown}>
         {props.children}
       </div>
       <div

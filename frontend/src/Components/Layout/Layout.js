@@ -1,62 +1,56 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import Toolbar from "./../Navigation/Toolbar/Toolbar";
 import Aux from "../../hoc/Auxilliary/Auxilliary";
 import SideDrawer from "./../Navigation/SideDrawer/SideDrawer";
-import Axios from 'axios'
+import Axios from "axios";
 import Modal from "../UI/Modal/Modal";
-import { withRouter } from 'react-router-dom'
+import { withRouter } from "react-router-dom";
 
-class Layout extends Component {
-  state = {
-    showSideDrawer: false,
-    showModal: false,
-    modalMsg: null
-  };
+const Layout = (props) => {
+  const [showSideDrawer, setShowSideDrawer] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMsg, setModalMsg] = useState(null);
 
-  logoutHandler = () => {
+  const logoutHandler = () => {
     Axios({
-        method: "GET",
-        url: '/social/users/logout',
-        withCredentials: true,
+      method: "GET",
+      url: "/social/users/logout",
+      withCredentials: true,
     }).then((res) => {
-        let cookies = this.props.cookies
-        cookies.remove('userLogin')
-        this.setState({
-          showModal: true,
-          modalMsg: 'Logged Out Successfully'
-        })
-        setTimeout(() => {
-          this.props.history.push('/authenticate')
-        }, 1000)
+      props.cookies.remove("userLogin");
 
-      }
-    )
-}
+      setShowModal(true);
+      setModalMsg("Logged Out Successfully");
 
-modalClosedHandler = () => {
-  this.setState({
-    showModal: false,
-    modalMsg: null
-  })   
-}
-
-  toggleSideBar = () => {
-    this.setState((prevState) => {
-      return { showSideDrawer: !prevState.showSideDrawer };
+      setTimeout(() => {
+        props.history.push("/authenticate");
+      }, 1000);
     });
   };
 
-  render() {
-    return (
-      <Aux>
-        
-        <Toolbar logout={this.logoutHandler} cookies={this.props.cookies} toggleSideBar={this.toggleSideBar}/>
-        <SideDrawer cookies={this.props.cookies} open={this.state.showSideDrawer} />
-        {this.props.children}
-        <Modal show={this.state.showModal} clicked={this.modalClosedHandler} type='msgModal'>{this.state.modalMsg}</Modal>
-      </Aux>
-    );
-  }
-}
+  const modalClosedHandler = () => {
+    setShowModal(false);
+    setModalMsg(null);
+  };
+
+  const toggleSideBar = () => {
+    setShowSideDrawer((prev) => !prev);
+  };
+
+  return (
+    <Aux>
+      <Toolbar
+        logout={logoutHandler}
+        cookies={props.cookies}
+        toggleSideBar={toggleSideBar}
+      />
+      <SideDrawer cookies={props.cookies} open={showSideDrawer} />
+      {props.children}
+      <Modal show={showModal} clicked={modalClosedHandler} type="msgModal">
+        {modalMsg}
+      </Modal>
+    </Aux>
+  );
+};
 
 export default withRouter(Layout);

@@ -1,239 +1,139 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import classes from "./Post.module.css";
 import Votes from "./Votes/Votes";
 import Aux from "../../hoc/Auxilliary/Auxilliary";
 import ToggleFullPost from "./ToggleFullPost/ToggleFullPost";
 import Axios from "../../axios";
-
 import { Link, withRouter } from "react-router-dom";
 import DropDown from "../DropDown/DropDown";
 
-class Post extends Component {
-  state = {
-    upvotes: this.props.upvoteCount,
-    downvotes: this.props.downvoteCount,
-    showFull: false,
-    up: this.props.upvoted,
-    down: this.props.downvoted,
-    deleted: null,
-    loading: false,
-  };
+const Post = (props) => {
+  const [upvotes, setUpvotes] = useState(props.upvoteCount);
+  const [downvotes, setDownvotes] = useState(props.downvoteCount);
+  const [showFull, setShowFull] = useState(false);
+  const [up, setUp] = useState(props.upvoted);
+  const [down, setDown] = useState(props.downvoted);
+  const [deleted, setDeleted] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // componentWillReceiveProps(nextProps) {
-  //     if(this.props !== nextProps) {
-  //       this.setState({
-  //         upvotes: nextProps.upvoteCount,
-  //         downvotes: nextProps.downvoteCount,
-  //         up: nextProps.upvoted,
-  //         down: nextProps.downvoted
-  //       });
-  //     }
-  //   }
-
-  upHandler = () => {
-    // console.log(this.props.id)
-    // console.log('upclick')
-    // upvote request goes here
-    Axios({
-      method: "GET",
-      url: `/social/posts/${this.props.postId}/upvote`,
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const upHandler = () => {
+    Axios.get(`/social/posts/${props.postId}/upvote`, {
+      headers: { "Content-Type": "application/json" },
       withCredentials: true,
     }).then((res) => {
       if (res.data) {
-        this.setState({
-          upvotes: res.data.data.upVoteCount,
-          downvotes: res.data.data.downVoteCount,
-          down: false,
-          up: !this.state.up,
-        });
+        setUpvotes(res.data.data.upVoteCount);
+        setDownvotes(res.data.data.downVoteCount);
+        setUp(!up);
+        setDown(false);
       }
     });
   };
 
-  downHandler = () => {
-    // console.log('downclick', this.state.downvotes)
-    Axios({
-      method: "GET",
-      url: `/social/posts/${this.props.postId}/downvote`,
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const downHandler = () => {
+    Axios.get(`/social/posts/${props.postId}/downvote`, {
+      headers: { "Content-Type": "application/json" },
       withCredentials: true,
     }).then((res) => {
       if (res.data) {
-        console.log(res.data.data.downVoteCount);
-        // this.setState()
-        this.setState({
-          downvotes: res.data.data.downVoteCount,
-          upvotes: res.data.data.upVoteCount,
-          down: !this.state.down,
-          up: false,
-        });
+        setDownvotes(res.data.data.downVoteCount);
+        setUpvotes(res.data.data.upVoteCount);
+        setDown(!down);
+        setUp(false);
       }
     });
   };
 
-  togglePostHandler = () => {
-    this.setState((prevState) => {
-      return { showFull: !prevState.showFull };
-    });
-  };
+  const togglePostHandler = () => setShowFull((prev) => !prev);
 
-  calculateTime = (now, origin) => {
+  const calculateTime = (now, origin) => {
     let createdAt = (now - origin) / 1000;
-
-    if (createdAt < 60) {
-      createdAt = `${Math.floor(createdAt)} seconds ago`;
-    } else {
-      createdAt = createdAt / 60;
-      // console.log(createdAt)
-      if (createdAt < 60) {
-        createdAt = `${Math.floor(createdAt)} minute${
-          createdAt >= 2 ? "s " : " "
-        }ago`;
-      } else {
-        createdAt = createdAt / 60;
-        if (createdAt < 24) {
-          createdAt = `${Math.floor(createdAt)} hour${
-            createdAt >= 2 ? "s " : " "
-          }ago`;
-        } else {
-          createdAt = createdAt / 24;
-          if (createdAt < 30) {
-            createdAt = `${Math.floor(createdAt)} day${
-              createdAt >= 2 ? "s " : " "
-            }ago`;
-          } else {
-            createdAt = createdAt / 30;
-            if (createdAt < 12) {
-              createdAt = `${Math.floor(createdAt)} month${
-                createdAt >= 2 ? "s " : " "
-              }ago`;
-            } else {
-              createdAt = createdAt / 12;
-              if (createdAt) {
-                createdAt = `${Math.floor(createdAt)} year${
-                  createdAt >= 2 ? "s " : " "
-                }ago`;
-              }
-            }
-          }
-        }
-      }
-    }
-    return createdAt;
+    if (createdAt < 60) return `${Math.floor(createdAt)} seconds ago`;
+    createdAt /= 60;
+    if (createdAt < 60) return `${Math.floor(createdAt)} minute${createdAt >= 2 ? "s " : " "}ago`;
+    createdAt /= 60;
+    if (createdAt < 24) return `${Math.floor(createdAt)} hour${createdAt >= 2 ? "s " : " "}ago`;
+    createdAt /= 24;
+    if (createdAt < 30) return `${Math.floor(createdAt)} day${createdAt >= 2 ? "s " : " "}ago`;
+    createdAt /= 30;
+    if (createdAt < 12) return `${Math.floor(createdAt)} month${createdAt >= 2 ? "s " : " "}ago`;
+    createdAt /= 12;
+    return `${Math.floor(createdAt)} year${createdAt >= 2 ? "s " : " "}ago`;
   };
 
-  deletePostHandler = () => {
-    this.setState({ loading: true });
-    Axios({
-      method: "DELETE",
-      url: `/social/posts/${this.props.postId}`,
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const deletePostHandler = () => {
+    setLoading(true);
+    Axios.delete(`/social/posts/${props.postId}`, {
+      headers: { "Content-Type": "application/json" },
       withCredentials: true,
     }).then(() => {
-      this.setState({
-        deleted: true,
-        loading: false,
-      });
+      setDeleted(true);
+      setLoading(false);
     });
   };
 
-  render() {
-    let deleteMsg = (
+  const origin = Date.parse(props.date);
+  const now = Date.now();
+  const contentReduced = props.content.length > 820 ? props.content.slice(0, 820) + "..." : props.content;
+
+  if (deleted) {
+    return (
       <p className={classes.DeletedMsg}>
-        <i className="far fa-trash-alt" style={{ color: "red" }}></i> Post
-        Deleted
+        <i className="far fa-trash-alt" style={{ color: "red" }}></i> Post Deleted
       </p>
     );
-    let origin = Date.parse(this.props.date);
-    // console.log(this.props.title, new Date(this.props.date))
-    let now = Date.now();
-    // console.log(now)
-    let contentReduced;
-    if (this.props.content.length > 820) {
-      contentReduced = this.props.content.slice(0, 820) + "...";
-    } else contentReduced = this.props.content.slice(0, 820);
-
-    return (
-      <Aux>
-        {this.state.deleted ? (
-          deleteMsg
-        ) : (
-          <div className={classes.Post}>
-            {this.props.userPost ? (
-              <DropDown
-                button={
-                  <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
-                }
-              >
-                <li className={classes.Options}>
-                  <Link
-                    style={{ textDecoration: "none" }}
-                    to={`/${this.props.postId}/edit`}
-                  >
-                    <p>Edit Post</p>
-                  </Link>
-                </li>
-                <li
-                  className={classes.Options}
-                  onClick={this.deletePostHandler}
-                >
-                  <p>Delete Post</p>
-                </li>
-              </DropDown>
-            ) : null}
-            <div className={classes.Title}>{this.props.title}</div>
-
-            <div className={classes.Time}>
-              created by
-              <span
-                className={classes.Username}
-                onClick={
-                  this.props.createdBy !== "[deleted]"
-                    ? this.props.userClick
-                    : null
-                }
-              >
-                {" "}
-                {this.props.createdBy}
-              </span>
-              , {this.calculateTime(now, origin)}
-            </div>
-
-            <div className={classes.Content}>
-              {!this.state.showFull ? contentReduced : this.props.content}
-            </div>
-
-            <span className={classes.Votes}>
-              <hr></hr>
-              <Votes
-                postId={this.props.postId}
-                upvotes={this.state.upvotes}
-                downvotes={this.state.downvotes}
-                up={this.state.up}
-                down={this.state.down}
-                upHandler={this.upHandler}
-                downHandler={this.downHandler}
-              />
-            </span>
-
-            {this.props.content.length > 820 ? (
-              <ToggleFullPost
-                togglePost={this.togglePostHandler}
-                full={this.state.showFull}
-              />
-            ) : null}
-          </div>
-        )}
-      </Aux>
-    );
   }
-}
+
+  return (
+    <Aux>
+      <div className={classes.Post}>
+        {props.userPost && (
+          <DropDown button={<i className="fas fa-ellipsis-v" aria-hidden="true"></i>}>
+            <li className={classes.Options}>
+              <Link style={{ textDecoration: "none" }} to={`/${props.postId}/edit`}>
+                <p>Edit Post</p>
+              </Link>
+            </li>
+            <li className={classes.Options} onClick={deletePostHandler}>
+              <p>Delete Post</p>
+            </li>
+          </DropDown>
+        )}
+
+        <div className={classes.Title}>{props.title}</div>
+        <div className={classes.Time}>
+          created by
+          <span
+            className={classes.Username}
+            onClick={props.createdBy !== "[deleted]" ? props.userClick : null}
+          >
+            {" "}{props.createdBy}
+          </span>, {calculateTime(now, origin)}
+        </div>
+
+        <div className={classes.Content}>
+          {!showFull ? contentReduced : props.content}
+        </div>
+
+        <span className={classes.Votes}>
+          <hr />
+          <Votes
+            postId={props.postId}
+            upvotes={upvotes}
+            downvotes={downvotes}
+            up={up}
+            down={down}
+            upHandler={upHandler}
+            downHandler={downHandler}
+          />
+        </span>
+
+        {props.content.length > 820 && (
+          <ToggleFullPost togglePost={togglePostHandler} full={showFull} />
+        )}
+      </div>
+    </Aux>
+  );
+};
 
 export default withRouter(Post);
