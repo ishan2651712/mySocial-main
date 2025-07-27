@@ -3,7 +3,7 @@ import { withRouter } from "react-router-dom";
 import { withCookies } from "react-cookie";
 
 import Post from "../../Components/Post/Post";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 import Spinner from "../../Components/UI/Spinner/Spinner";
 import SortBy from "../../Components/SortBy/SortBy";
 import CreatePostButton from "../../Components/CreatePost/CreatePostButton";
@@ -21,15 +21,14 @@ const Posts = (props) => {
 
   const fetchPosts = (sortQuery = sortby) => {
     setLoading(true);
-    Axios({
-      method: "GET",
-      url: `/social/posts?sort=${sortQuery}${
+    fetchAPI(`/social/posts?sort=${sortQuery}${
         userId ? `&user=${userId}` : ""
-      }`,
+      }`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      withCredentials: true,
+      credentials: 'include',
     })
       .then((res) => {
         setPosts(res.data.data);
@@ -46,7 +45,7 @@ const Posts = (props) => {
   const userShowHandler = (id) => {
     if (id) {
       setShowUser(true);
-      Axios.get(`/social/users/${id}`).then((res) => {
+      fetchAPI.get(`/social/users/${id}`).then((res) => {
         if (res.data) {
           setUser(res.data.data);
         }

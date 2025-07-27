@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import classes from "./UpdatePassword.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 
 import { useHistory } from "react-router-dom";
 import Spinner from "./../UI/Spinner/Spinner";
@@ -25,42 +25,43 @@ const UpdatePassword = ({ cookies, login, signup, errormsg }) => {
     const updatedPassword = updatedPasswordRef.current.value;
     const passwordConfirm = passwordConfirmRef.current.value;
 
-    Axios({
-      method: "PATCH",
-      url: `/social/users/updatePassword`,
+    fetchAPI(`/social/users/updatePassword`, {
+      method: "PATCH", // Set HTTP method to PATCH
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // Set content type to JSON
       },
-      data: {
+      credentials: 'include', // Equivalent to `withCredentials: true` in Axios
+      body: JSON.stringify({
         currentPassword,
         updatedPassword,
         passwordConfirm,
-      },
-      withCredentials: true,
+      }), // Stringify the data object
     })
       .then((res) => {
-        if (res.data) {
-          cookies.set("userLogin", res.data.data);
+        if (res.data) { // If response contains data
+          cookies.set("userLogin", res.data.data); // Set user data in cookies
           setStatus("Password Updated Successfully");
           setUpdatePassword(true);
           setLoading(false);
           setTimeout(() => {
-            history.push("/");
+            history.push("/"); // Redirect to home page after 1 second
           }, 1000);
         } else {
-          setStatus(errormsg);
+          setStatus(errormsg); // Set error message if no data
           setUpdatePassword(false);
           setLoading(false);
         }
       })
       .catch((err) => {
+        // Handle errors (network error or failed response parsing)
         const msg =
-          err.response?.data?.error?.message ||
-          "Network error. Please try again.";
+          err?.response?.data?.error?.message ||
+          "Network error. Please try again."; // Default error message
         setStatus(msg);
         setUpdatePassword(false);
         setLoading(false);
       });
+
   };
 
   const attachedClasses = [updatePassword ? classes.Green : classes.Red];

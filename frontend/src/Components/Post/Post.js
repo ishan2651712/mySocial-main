@@ -3,7 +3,7 @@ import classes from "./Post.module.css";
 import Votes from "./Votes/Votes";
 import Aux from "../../hoc/Auxilliary/Auxilliary";
 import ToggleFullPost from "./ToggleFullPost/ToggleFullPost";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 import { Link, withRouter } from "react-router-dom";
 import DropDown from "../DropDown/DropDown";
 
@@ -17,23 +17,31 @@ const Post = (props) => {
   const [loading, setLoading] = useState(false);
 
   const upHandler = () => {
-    Axios.get(`/social/posts/${props.postId}/upvote`, {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true,
-    }).then((res) => {
-      if (res.data) {
-        setUpvotes(res.data.data.upVoteCount);
-        setDownvotes(res.data.data.downVoteCount);
-        setUp(!up);
-        setDown(false);
-      }
-    });
+    fetchAPI(`/social/posts/${props.postId}/upvote`, {
+      method: "GET", // Set the HTTP method to GET
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: 'include',
+    })
+      .then((res) => {
+        if (res.data) { // Check if the response contains the expected data
+          setUpvotes(res.data.data.upVoteCount); // Set the upvote count
+          setDownvotes(res.data.data.downVoteCount); // Set the downvote count
+          setUp(!up); // Toggle the upvote state
+          setDown(false); // Reset the downvote state
+        }
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+      });
   };
 
   const downHandler = () => {
-    Axios.get(`/social/posts/${props.postId}/downvote`, {
+    fetchAPI(`/social/posts/${props.postId}/downvote`, {
+      method: "GET",
       headers: { "Content-Type": "application/json" },
-      withCredentials: true,
+      credentials: 'include',
     }).then((res) => {
       if (res.data) {
         setDownvotes(res.data.data.downVoteCount);
@@ -41,6 +49,8 @@ const Post = (props) => {
         setDown(!down);
         setUp(false);
       }
+    }).catch((err) => {
+        console.error("Error:", err);
     });
   };
 
@@ -63,13 +73,21 @@ const Post = (props) => {
 
   const deletePostHandler = () => {
     setLoading(true);
-    Axios.delete(`/social/posts/${props.postId}`, {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true,
-    }).then(() => {
-      setDeleted(true);
-      setLoading(false);
-    });
+    fetchAPI(`/social/posts/${props.postId}`, {
+      method: "DELETE", // HTTP method for deleting a post
+      headers: {
+        "Content-Type": "application/json", // Content-Type header
+      },
+      credentials: 'include', // Equivalent to `withCredentials: true` in Axios
+    })
+      .then(() => {
+        setDeleted(true);  // Mark as deleted
+        setLoading(false); // Stop loading spinner
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+        setLoading(false); // Stop loading if there's an error
+      });
   };
 
   const origin = Date.parse(props.date);

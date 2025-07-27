@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../../Components/UI/Modal/Modal";
 import Aux from "../Auxilliary/Auxilliary";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import fetchAPI from "../../utils/fetchAPI"; // Import your existing fetchAPI function
 
 const errorHandler = (WrappedComponent) => {
@@ -10,6 +10,7 @@ const errorHandler = (WrappedComponent) => {
     const [error, setError] = useState(null);
 
     const location = useLocation();
+    const history = useHistory();
 
     useEffect(() => {
       // Cleanup error states on unmount
@@ -50,7 +51,7 @@ const errorHandler = (WrappedComponent) => {
             <br />
           </Modal>
         )}
-        <WrappedComponent {...props} errormsg={err.message} />
+        <WrappedComponent {...props} errormsg={err.message} fetchAPI={fetchAPI} />
       </Aux>
     );
   };

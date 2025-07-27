@@ -3,7 +3,7 @@ import { useParams, useHistory, Link } from "react-router-dom";
 import { withCookies } from "react-cookie";
 
 import Posts from "../../Containers/Posts/Posts";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 
 import classes from "./UserPage.module.css";
 import userImg from "../../assets/img/userImg.png";
@@ -25,7 +25,7 @@ const UserPage = (props) => {
           ? `/social/users/${userId}`
           : `/social/users/me`;
 
-        const res = await Axios.get(url, { withCredentials: true });
+        const res = await fetchAPI.get(url, { credentials: 'include' });
 
         if (res.status === 200) {
           setUser(res.data.data);

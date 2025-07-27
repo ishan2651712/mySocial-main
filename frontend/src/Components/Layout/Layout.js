@@ -12,10 +12,9 @@ const Layout = (props) => {
   const [modalMsg, setModalMsg] = useState(null);
 
   const logoutHandler = () => {
-    Axios({
+    fetchAPI(""/social/users/logout", {
       method: "GET",
-      url: "/social/users/logout",
-      withCredentials: true,
+      credentials: 'include',
     }).then((res) => {
       props.cookies.remove("userLogin");
 

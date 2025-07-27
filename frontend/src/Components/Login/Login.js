@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import classes from "./Login.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 import { withRouter } from "react-router-dom";
 
 const Login = (props) => {
@@ -18,36 +18,38 @@ const Login = (props) => {
     const userInfo = { email: null, username: null };
     userInfo[props.loginType] = document.getElementsByName(props.loginType)[0].value;
 
-    Axios({
+    fetchAPI(`/social/users/login`, {
       method: "POST",
-      url: `/social/users/login`,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // Send JSON data
       },
-      data: {
+      credentials: 'include', // Equivalent to `withCredentials: true` in Axios
+      body: JSON.stringify({
         email: userInfo.email,
         username: userInfo.username,
         password: password,
-      },
-      withCredentials: true,
+      }), // Stringify the data object
     })
       .then((res) => {
-        if (res.data) {
+        if (res.data) { // Check if the response contains data
           setLoggedIn(true);
           setUsername(res.data.data.username);
           setUserId(res.data.data.id);
           setStatus("Log in successful");
-          props.cookies.set("userLogin", res.data.data);
+          props.cookies.set("userLogin", res.data.data); // Store login data in cookies
+
+          // Redirect after a short delay
           setTimeout(() => {
-            props.history.push("/");
+            props.history.push("/"); // Navigate to the home page
           }, 1000);
         } else {
           setLoggedIn(false);
-          setStatus(props.errormsg);
+          setStatus(props.errormsg); // Show error message if no data is returned
         }
       })
       .catch((err) => {
-        console.error(err);
+        // Handle errors (network or response parsing issues)
+        console.error("Error:", err);
         setLoggedIn(false);
         setStatus("An error occurred. Please try again.");
       });

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import classes from "./ForgotPassword.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 
 import { withRouter } from "react-router-dom";
 import Spinner from "./../UI/Spinner/Spinner";
@@ -20,33 +20,43 @@ const ForgotPassword = (props) => {
       document.getElementsByName("passwordConfirm")[0].value;
     const token = document.getElementsByName("token")[0].value;
 
-    Axios({
+    fetchAPI(`/social/users/resetPassword`, {
       method: "PATCH",
-      url: `/social/users/resetPassword`,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // Sending JSON data
       },
-      data: {
+      credentials: 'include',
+      body: JSON.stringify({
         password,
         passwordConfirm,
         token,
-      },
-    }).then((res) => {
-      if (res.data) {
-        props.cookies.set("userLogin", res.data.data);
+      }), // Stringify the request body
+    })
+      .then((res) => {
+        if (res.data) { // Assuming res.data contains the response
+          // Assuming the response includes a 'data' object containing the user's information
+          props.cookies.set("userLogin", res.data.data);
 
-        setStatus("Password Updated Successfully");
-        setResetPassword(true);
+          setStatus("Password Updated Successfully");
+          setResetPassword(true);
 
-        setTimeout(() => {
-          props.history.push("/");
-        }, 1000);
-      } else {
-        setStatus(props.errormsg);
+          setTimeout(() => {
+            props.history.push("/"); // Redirect after 1 second
+          }, 1000);
+        } else {
+          setStatus(props.errormsg); // Handle the error message
+          setResetPassword(false);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        // Handle errors in network or JSON parsing
+        console.error("Error:", err);
+        setStatus("Something went wrong!");
         setResetPassword(false);
         setLoading(false);
-      }
-    });
+      });
+
   };
 
   const forgotPasswordHandler = (event) => {
@@ -55,7 +65,7 @@ const ForgotPassword = (props) => {
 
     const email = document.getElementsByName("email")[0].value;
 
-    Axios({
+    fetchAPI({
       method: "POST",
       url: `/social/users/forgotPassword`,
       headers: {

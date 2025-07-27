@@ -27,18 +27,17 @@ const UpdateMe = (props) => {
     const email = emailRef.current.value;
     const username = usernameRef.current.value;
 
-    Axios({
-      method: "PATCH",
-      url: `/social/users/updateMe`,
+    fetchAPI(`/social/users/updateMe`, {
+      method: "PATCH", // Set HTTP method to PATCH
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // Set content type to JSON
       },
-      data: {
+      credentials: 'include', // Equivalent to `withCredentials: true` in Axios
+      body: JSON.stringify({ // Stringify the data object
         name,
         email,
         username,
-      },
-      withCredentials: true,
+      }),
     })
       .then((res) => {
         if (res.data) {

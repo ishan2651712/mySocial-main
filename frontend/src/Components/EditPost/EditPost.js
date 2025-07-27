@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import classes from "./EditPost.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 import { withRouter } from "react-router-dom";
 import Spinner from "../UI/Spinner/Spinner";
 
@@ -16,18 +16,16 @@ const EditPost = (props) => {
 
   useEffect(() => {
     console.log(id);
-    Axios({
+    fetchAPI(`/social/posts/${id}`, {
       method: "GET",
-      url: `/social/posts/${id}`,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json",  // Optional for GET, but included for consistency
       },
-      withCredentials: true,
     })
       .then((res) => {
-        console.log(res.data.data);
-        setTitle(res.data.data.title);
-        setContent(res.data.data.content);
+        console.log(res.data);
+        setTitle(res.data.title);
+        setContent(res.data.content);
       })
       .catch((err) => {
         console.log(err);
@@ -41,7 +39,7 @@ const EditPost = (props) => {
     const updatedTitle = document.getElementsByName("title")[0].value;
     const updatedContent = document.getElementsByName("content")[0].value;
 
-    Axios({
+    fetchAPI({
       method: "PATCH",
       url: `/social/posts/${id}`,
       headers: {

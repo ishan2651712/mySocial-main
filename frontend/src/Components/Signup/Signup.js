@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import classes from "./Signup.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 
 import { useHistory } from "react-router-dom";
 import Spinner from "../UI/Spinner/Spinner";
@@ -30,30 +30,29 @@ const Signup = ({ cookies, login }) => {
 
     setLoading(true);
 
-    Axios({
+    fetchAPI(`/social/users/signup`, {
       method: "POST",
-      url: `/social/users/signup`,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // Set content type to JSON
       },
-      data: {
+      credentials: 'include', // Equivalent to `withCredentials: true` in Axios
+      body: JSON.stringify({ // Stringify the data object
         name,
         email,
         username,
         password,
         passwordConfirm,
-      },
-      withCredentials: true,
+      }),
     })
       .then((res) => {
-        if (res.data) {
+        if (res.data) { // Assuming res.data contains the response data
           setSignedUp(true);
           setStatus("Account Created Successfully");
           setLoading(false);
-          cookies.set("userLogin", res.data.data);
+          cookies.set("userLogin", res.data.data); // Set user data in cookies
 
           setTimeout(() => {
-            history.push("/");
+            history.push("/"); // Redirect to home page after 1 second
           }, 1000);
         } else {
           setSignedUp(false);
@@ -62,13 +61,15 @@ const Signup = ({ cookies, login }) => {
         }
       })
       .catch((err) => {
+        // Handle error if the fetch request fails (network error or response issue)
         setSignedUp(false);
         const msg =
-          err.response?.data?.error?.message ||
-          "Network Error, Please try again later";
+          err?.response?.data?.error?.message ||
+          "Network Error, Please try again later"; // Default message in case of error
         setStatus(msg);
         setLoading(false);
       });
+
   };
 
   const attachedClasses = [signedUp ? classes.Green : classes.Red];

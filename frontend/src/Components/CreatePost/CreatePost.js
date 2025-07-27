@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import classes from "./CreatePost.module.css";
-import Axios from "../../axios";
+import fetchAPI from "../../fetchAPI";
 import { withRouter } from "react-router-dom";
 import Spinner from "../UI/Spinner/Spinner";
 
@@ -16,15 +16,14 @@ const CreatePost = (props) => {
     const title = document.getElementsByName("title")[0].value;
     const content = document.getElementsByName("content")[0].value;
 
-    Axios({
+    fetchAPI(`/social/posts`, {
       method: "POST",
-      url: `/social/posts`,
       headers: {
         "Content-Type": "application/json",
       },
-      data: { title, content },
-      withCredentials: true,
-    }).then((res) => {
+      credentials: 'include',
+      body: JSON.stringify({ title, content }),
+  }).then((res) => {
       if (res.data) {
         console.log(res.data.data);
         setStatus("Post created Successfully");
